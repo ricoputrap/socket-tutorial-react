@@ -3,18 +3,11 @@ import io from "socket.io-client";
 import { useState } from 'react';
 import { useEffect } from 'react';
 
-const socket = io.connect("http://localhost:3001", {
-  transports: ["websocket"]
-})
-
-socket.on("connect_error", (err) => {
-  console.log("===== ERROR:", err)
-})
-
 function App() {
 
+  const [socket, setSocket] = useState();
   const [message, setMessage] = useState("");
-  const [receivedMessage, setReceivedMessage] = useState("");
+  const [receivedMessages, setReceivedMessages] = useState([]);
 
   const sendMessage = () => {
     socket.emit("send_message", {
@@ -24,9 +17,22 @@ function App() {
     setMessage("");
   }
 
+  // @todo use singleton pattern
   useEffect(() => {
+    setSocket(io.connect("http://localhost:3001", {
+      transports: ["websocket"]
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
     socket.on("receive_message", (data) => {
-      setReceivedMessage(data.message);
+      setReceivedMessages(prevMessages => [...prevMessages, data.message]);
+    })
+
+    socket.on("connect_error", (err) => {
+      console.log("===== ERROR:", err)
     })
   }, [socket]);
 
@@ -45,7 +51,9 @@ function App() {
       </div>
 
       <div className='messages'>
-        { receivedMessage }
+        {receivedMessages.map(msg => (
+          <div key={msg}>{ msg }</div>
+        ))}
       </div>
     </main>
   )

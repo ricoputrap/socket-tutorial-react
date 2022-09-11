@@ -9,12 +9,25 @@ function App() {
   const [message, setMessage] = useState("");
   const [receivedMessages, setReceivedMessages] = useState([]);
 
+  const [room, setRoom] = useState("");
+  const [joinedRoom, setJoinedRoom] = useState("");
+
   const sendMessage = () => {
     socket.emit("send_message", {
-      message: message
+      message,
+      room: joinedRoom
     });
 
     setMessage("");
+  }
+
+  const joinRoom = () => {
+    if (room !== "") {
+      socket.emit("join_room", room);
+    }
+
+    setRoom("");
+    setJoinedRoom(room);
   }
 
   // @todo use singleton pattern
@@ -38,6 +51,17 @@ function App() {
 
   return (
     <main>
+      <div id="roombox">
+        <input
+          type="text"
+          placeholder='Room...'
+          value={ room }
+          onChange={(event) => {
+            setRoom(event.target.value);
+          }}
+        />
+        <button onClick={joinRoom}>Join</button>
+      </div>
       <div className="chatbox">
         <input
           type="text"
@@ -51,6 +75,8 @@ function App() {
       </div>
 
       <div className='messages'>
+        <h3>{ joinedRoom }</h3>
+
         {receivedMessages.map(msg => (
           <div key={msg}>{ msg }</div>
         ))}
